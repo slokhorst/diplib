@@ -89,22 +89,11 @@ class Image::Sample {
       }
 
       /// A numeric value implicitly converts to a `%Sample`.
-      template< typename T, typename = std::enable_if_t< IsSampleType< T >::value >>
+      template< typename T, typename = std::enable_if_t< IsNumericType< T >::value >>
       constexpr Sample( T value ) {
          dataType_ = dip::DataType( value );
          *static_cast< T* >( origin_ ) = value;
       }
-      constexpr Sample( bool value ) : dataType_( DT_BIN ) {
-         *static_cast< bin* >( origin_ ) = value;
-      }
-      #if SIZE_MAX != UINT32_MAX // we don't want to compile the next two on 32-bit machines, they'd conflict with s/uint32 constructors above.
-      constexpr Sample( dip::uint value ) : dataType_( DT_UINT32 ) {
-         *static_cast< uint32* >( origin_ ) = clamp_cast< uint32 >( value );
-      }
-      constexpr Sample( dip::sint value ) : dataType_( DT_SINT32 ) {
-         *static_cast< sint32* >( origin_ ) = clamp_cast< sint32 >( value );
-      }
-      #endif
 
       /// A `dip::Image::Pixel`, when cast to a `%Sample`, references the first value in the pixel.
       Sample( Pixel const& pixel );
@@ -173,27 +162,11 @@ class Image::Sample {
       }
 
       /// It is also possible to assign a constant directly.
-      template< typename T, typename = std::enable_if_t< IsSampleType< T >::value >>
+      template< typename T, typename = std::enable_if_t< IsNumericType< T >::value >>
       constexpr Sample& operator=( T value ) {
          detail::CastSample( dip::DataType( value ), &value, dataType_, origin_ );
          return *this;
       }
-      constexpr Sample& operator=( bool value ) {
-         detail::CastSample( DT_BIN, &value, dataType_, origin_ );
-         return *this;
-      }
-      #if SIZE_MAX != UINT32_MAX // we don't want to compile the next two on 32-bit machines, they'd conflict with s/uint32 constructors above.
-      constexpr Sample& operator=( dip::uint value ) {
-         uint32 tmp = clamp_cast< uint32 >( value );
-         detail::CastSample( DT_UINT32, &tmp, dataType_, origin_ );
-         return *this;
-      }
-      constexpr Sample& operator=( dip::sint value ) {
-         sint32 tmp = clamp_cast< sint32 >( value );
-         detail::CastSample( DT_SINT32, &tmp, dataType_, origin_ );
-         return *this;
-      }
-      #endif
 
       /// Returns a pointer to the sample referenced.
       constexpr void* Origin() const { return origin_; }
@@ -267,9 +240,10 @@ inline std::ostream& operator<<(
       case DT_UINT8:
       case DT_UINT16:
       case DT_UINT32:
-         os << sample.As< uint32 >(); break;
+      case DT_UINT64:
+         os << sample.As< uint64 >(); break;
       default: // signed integers
-         os << sample.As< sint32 >(); break;
+         os << sample.As< sint64 >(); break;
       case DT_SFLOAT:
       case DT_DFLOAT:
          os << sample.As< dfloat >(); break;
@@ -338,7 +312,7 @@ class Image::Pixel {
 
       /// \brief A `%Pixel` can be constructed from an initializer list, yielding a pixel with the same data
       /// type and number of tensor elements as the initializer list. The pixel will be a column vector.
-      template< typename T, typename std::enable_if_t< IsSampleType< T >::value, int > = 0 >
+      template< typename T, typename std::enable_if_t< IsNumericType< T >::value, int > = 0 >
       Pixel( std::initializer_list< T > values ) {
          dip::uint N = values.size();
          tensor_.SetVector( N );
@@ -449,7 +423,7 @@ class Image::Pixel {
          return operator=( static_cast< Pixel const& >( pixel ));
       }
       /// It is also possible to assign from an initializer list.
-      template< typename T, typename = std::enable_if_t< IsSampleType< T >::value >>
+      template< typename T, typename = std::enable_if_t< IsNumericType< T >::value >>
       Pixel& operator=( std::initializer_list< T > values ) {
          dip::uint N = tensor_.Elements();
          DIP_THROW_IF( values.size() != N, E::NTENSORELEM_DONT_MATCH );

@@ -35,7 +35,7 @@ endif()
 
 # Do we have __PRETTY_FUNCTION__ ?
 include(CheckCXXSourceCompiles)
-check_cxx_source_compiles("int main() { char const* name = __PRETTY_FUNCTION__; return 0; }" HAS_PRETTY_FUNCTION)
+check_cxx_source_compiles("int main() { char const* name = __PRETTY_FUNCTION__; }" HAS_PRETTY_FUNCTION)
 if(HAS_PRETTY_FUNCTION)
    target_compile_definitions(DIP PUBLIC DIP__HAS_PRETTY_FUNCTION)
 endif()
@@ -104,8 +104,9 @@ endif()
 # libics
 set(DIP_ENABLE_ICS ON CACHE BOOL "Enable ICS file support")
 if(DIP_ENABLE_ICS)
+   set(LIBICS_INCLUDE_CPP Off) # TODO: we should start using the C++ interface
    add_subdirectory("${PROJECT_SOURCE_DIR}/dependencies/libics" "${PROJECT_BINARY_DIR}/libics" EXCLUDE_FROM_ALL)
-   target_link_libraries(DIP PRIVATE libics_static)
+   target_link_libraries(DIP PRIVATE libics)
    target_compile_definitions(DIP PRIVATE DIP__HAS_ICS)
 endif()
 

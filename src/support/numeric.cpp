@@ -243,8 +243,12 @@ DOCTEST_TEST_CASE("[DIPlib] testing the dip::clamp_cast functions") {
    // We pick a few cases, it's difficult to do an exhaustive test here, and not really necessary.
    // Cast up:
    DOCTEST_CHECK( dip::clamp_cast< dip::uint32 >( dip::uint8( 50 )) == dip::uint32( 50 ));
+   DOCTEST_CHECK( dip::clamp_cast< dip::sint32 >( dip::uint8( 50 )) == dip::sint32( 50 ));
+   DOCTEST_CHECK( dip::clamp_cast< dip::uint32 >( dip::sint8( 50 )) == dip::uint32( 50 ));
+   DOCTEST_CHECK( dip::clamp_cast< dip::sint32 >( dip::sint8( 50 )) == dip::sint32( 50 ));
    DOCTEST_CHECK( dip::clamp_cast< dip::sfloat >( dip::sint8( 50 )) == dip::sfloat( 50 ));
-   DOCTEST_CHECK( dip::clamp_cast< dip::dcomplex >( dip::uint32( 50 )) == dip::dcomplex( 50 ));
+   DOCTEST_CHECK( dip::clamp_cast< dip::dcomplex >( dip::uint32( 50 )) == dip::dcomplex{ 50, 0 } );
+   DOCTEST_CHECK( dip::clamp_cast< dip::dcomplex >( dip::scomplex{ 50,0 } ) == dip::dcomplex{ 50, 0 } );
    // Cast down:
    DOCTEST_CHECK( dip::clamp_cast< dip::uint32 >( dip::sfloat( 50 )) == dip::uint32( 50 ));
    DOCTEST_CHECK( dip::clamp_cast< dip::uint32 >( dip::sfloat( -50 )) == dip::uint32( 0 ));
@@ -253,41 +257,154 @@ DOCTEST_TEST_CASE("[DIPlib] testing the dip::clamp_cast functions") {
    DOCTEST_CHECK( dip::clamp_cast< dip::sint16 >( dip::sfloat( 1e20 )) == dip::sint16( 32767 ));
    DOCTEST_CHECK( dip::clamp_cast< dip::sfloat >( dip::dcomplex{ 4, 3 } ) == dip::sfloat( 5 ));
    DOCTEST_CHECK( dip::clamp_cast< dip::uint8 >( dip::scomplex{ 4, 3 } ) == dip::uint8( 5 ));
+   DOCTEST_CHECK( dip::clamp_cast< dip::uint8 >( dip::uint( 300 ) ) == dip::uint8( 255 ));
+   DOCTEST_CHECK( dip::clamp_cast< dip::uint8 >( dip::sint( -300 ) ) == dip::uint8( 0 ));
+   DOCTEST_CHECK( dip::clamp_cast< dip::sint8 >( dip::uint( 300 ) ) == dip::sint8( 127 ));
+   DOCTEST_CHECK( dip::clamp_cast< dip::sint8 >( dip::sint( -300 ) ) == dip::sint8( -128 ));
    // Signed/unsigned casts:
    DOCTEST_CHECK( dip::clamp_cast< dip::uint16 >( dip::sint16( -50 )) == dip::uint16( 0 ));
    DOCTEST_CHECK( dip::clamp_cast< dip::uint16 >( dip::sint16( 50 )) == dip::uint16( 50 ));
    DOCTEST_CHECK( dip::clamp_cast< dip::sint16 >( dip::uint16( 50 )) == dip::sint16( 50 ));
    DOCTEST_CHECK( dip::clamp_cast< dip::sint16 >( dip::uint16( 50000 )) == dip::sint16( 32767 ));
+   // To/from dip::bin
+   DOCTEST_CHECK( dip::clamp_cast< dip::bin >( dip::sint16( -50 )) == dip::bin( 1 ));
+   DOCTEST_CHECK( dip::clamp_cast< dip::bin >( dip::sint16( 0 )) == dip::bin( 0 ));
+   DOCTEST_CHECK( dip::clamp_cast< dip::bin >( dip::sint16( 50 )) == dip::bin( 1 ));
+   DOCTEST_CHECK( dip::clamp_cast< dip::bin >( dip::scomplex{ 0, 1 } ) == dip::bin( 1 ));
+   DOCTEST_CHECK( dip::clamp_cast< dip::sint16 >( dip::bin( 0 )) == dip::sint16( 0 ));
+   DOCTEST_CHECK( dip::clamp_cast< dip::sint16 >( dip::bin( 1 )) == dip::sint16( 1 ));
+   DOCTEST_CHECK( dip::clamp_cast< dip::scomplex >( dip::bin( 1 )) == dip::scomplex{ 1, 0 } );
 }
 
 DOCTEST_TEST_CASE("[DIPlib] testing the dip::saturatedXXX functions") {
    // Addition
-   DOCTEST_CHECK( dip::saturated_add( dip::uint8( 50 ), dip::uint8( 20 )) == dip::uint8( 70 ));
-   DOCTEST_CHECK( dip::saturated_add( dip::uint8( 250 ), dip::uint8( 20 )) == dip::uint8( 255 ));
-   DOCTEST_CHECK( dip::saturated_add( dip::sint16( 250 ), dip::sint16( 20 )) == dip::sint16( 270 ));
-   DOCTEST_CHECK( dip::saturated_add( dip::sint16( 30000 ), dip::sint16( 10000 )) == dip::sint16( 32767 ));
+
+   DOCTEST_CHECK( dip::saturated_add( dip::uint8( 200 ), dip::uint8( 5 )) == dip::uint8( 205 ));
+   DOCTEST_CHECK( dip::saturated_add( dip::uint8( 200 ), dip::uint8( 50 )) == dip::uint8( 250 ));
+   DOCTEST_CHECK( dip::saturated_add( dip::uint8( 200 ), dip::uint8( 60 )) == dip::uint8( 255 ));
+
+   DOCTEST_CHECK( dip::saturated_add( dip::sint8( 100 ), dip::sint8( 5 )) == dip::sint8( 105 ));
+   DOCTEST_CHECK( dip::saturated_add( dip::sint8( 100 ), dip::sint8( 20 )) == dip::sint8( 120 ));
+   DOCTEST_CHECK( dip::saturated_add( dip::sint8( 100 ), dip::sint8( 30 )) == dip::sint8( 127 ));
+   DOCTEST_CHECK( dip::saturated_add( dip::sint8( 100 ), dip::sint8( -30 )) == dip::sint8( 70 ));
+   DOCTEST_CHECK( dip::saturated_add( dip::sint8( -100 ), dip::sint8( -5 )) == dip::sint8( -105 ));
+   DOCTEST_CHECK( dip::saturated_add( dip::sint8( -100 ), dip::sint8( -20 )) == dip::sint8( -120 ));
+   DOCTEST_CHECK( dip::saturated_add( dip::sint8( -100 ), dip::sint8( -30 )) == dip::sint8( -128 ));
+
+   DOCTEST_CHECK( dip::saturated_add( dip::uint16( 1u<<15u ), dip::uint16( 1u<<15u )) == std::numeric_limits< dip::uint16 >::max() );
+   DOCTEST_CHECK( dip::saturated_add( dip::sint16( 1u<<14u ), dip::sint16( 1u<<14u )) == std::numeric_limits< dip::sint16 >::max() );
+   DOCTEST_CHECK( dip::saturated_add( -dip::sint16( 1u<<14u ), -dip::sint16( 1u<<14u )) == std::numeric_limits< dip::sint16 >::lowest() );
+
+   DOCTEST_CHECK( dip::saturated_add( dip::uint32( 1u<<31u ), dip::uint32( 1u<<31u )) == std::numeric_limits< dip::uint32 >::max() );
+   DOCTEST_CHECK( dip::saturated_add( dip::sint32( 1u<<30u ), dip::sint32( 1u<<30u )) == std::numeric_limits< dip::sint32 >::max() );
+   DOCTEST_CHECK( dip::saturated_add( -dip::sint32( 1u<<30u ), -dip::sint32( 1u<<30u )) == std::numeric_limits< dip::sint32 >::lowest() );
+
+   DOCTEST_CHECK( dip::saturated_add( dip::uint64( 9000000000000000000ull ), dip::uint64( 9000000000000000000ull )) == dip::uint64( 18000000000000000000ull ));
+   DOCTEST_CHECK( dip::saturated_add( dip::uint64( 10000000000000000000ull ), dip::uint64( 10000000000000000000ull )) == std::numeric_limits< dip::uint64 >::max() );
+
+   DOCTEST_CHECK( dip::saturated_add( dip::sint64( 9000000000000000000ll ), dip::sint64( 5 )) == dip::sint64( 9000000000000000005ll ));
+   DOCTEST_CHECK( dip::saturated_add( dip::sint64( 9000000000000000000ll ), dip::sint64( 9000000000000000000ll )) == std::numeric_limits< dip::sint64 >::max() );
+   DOCTEST_CHECK( dip::saturated_add( dip::sint64( 100 ), dip::sint64( -30 )) == dip::sint64( 70 ));
+   DOCTEST_CHECK( dip::saturated_add( dip::sint64( -100 ), dip::sint64( 30 )) == dip::sint64( -70 ));
+   DOCTEST_CHECK( dip::saturated_add( dip::sint64( -9000000000000000000ll ), dip::sint64( -5 )) == dip::sint64( -9000000000000000005ll ));
+   DOCTEST_CHECK( dip::saturated_add( dip::sint64( -9000000000000000000ll ), dip::sint64( -9000000000000000000ll )) == std::numeric_limits< dip::sint64 >::lowest() );
+   DOCTEST_CHECK( dip::saturated_add( 5.0, 3.0 ) == 8.0 );
+
    // Subtraction
-   DOCTEST_CHECK( dip::saturated_sub( dip::uint16( 20 ), dip::uint16( 10 )) == dip::uint16( 10 ));
-   DOCTEST_CHECK( dip::saturated_sub( dip::uint16( 10 ), dip::uint16( 20 )) == dip::uint16( 0 ));
-   DOCTEST_CHECK( dip::saturated_sub( dip::sint16( 10 ), dip::sint16( 20 )) == dip::sint16( -10 ));
-   DOCTEST_CHECK( dip::saturated_sub( dip::uint8( 10 ), dip::uint8( 20 )) == dip::uint8( 0 ));
-   DOCTEST_CHECK( dip::saturated_sub( dip::uint32( 10000 ), dip::uint32( 5000 )) == dip::uint32( 5000 ));
-   DOCTEST_CHECK( dip::saturated_sub( dip::uint32( 10000 ), dip::uint32( 10000 )) == dip::uint32( 0 ));
-   DOCTEST_CHECK( dip::saturated_sub( dip::uint32( 10000 ), dip::uint32( 20000 )) == dip::uint32( 0 ));
+
+   DOCTEST_CHECK( dip::saturated_sub( dip::uint8( 200 ), dip::uint8( 5 )) == dip::uint8( 195 ));
+   DOCTEST_CHECK( dip::saturated_sub( dip::uint8( 5 ), dip::uint8( 200 )) == dip::uint8( 0 ));
+
+   DOCTEST_CHECK( dip::saturated_sub( dip::sint8( 100 ), dip::sint8( 5 )) == dip::sint8( 95 ));
+   DOCTEST_CHECK( dip::saturated_sub( dip::sint8( 100 ), dip::sint8( 20 )) == dip::sint8( 80 ));
+   DOCTEST_CHECK( dip::saturated_sub( dip::sint8( 20 ), dip::sint8( 100 )) == dip::sint8( -80 ));
+   DOCTEST_CHECK( dip::saturated_sub( dip::sint8( 100 ), dip::sint8( -30 )) == dip::sint8( 127 ));
+   DOCTEST_CHECK( dip::saturated_sub( dip::sint8( -100 ), dip::sint8( -5 )) == dip::sint8( -95 ));
+   DOCTEST_CHECK( dip::saturated_sub( dip::sint8( -100 ), dip::sint8( 20 )) == dip::sint8( -120 ));
+   DOCTEST_CHECK( dip::saturated_sub( dip::sint8( -100 ), dip::sint8( 30 )) == dip::sint8( -128 ));
+
+   DOCTEST_CHECK( dip::saturated_sub( dip::uint16( 100 ), dip::uint16( 20000 )) == 0 );
+   DOCTEST_CHECK( dip::saturated_sub( dip::sint16( 20000 ), dip::sint16( -20000 )) == std::numeric_limits< dip::sint16 >::max() );
+   DOCTEST_CHECK( dip::saturated_sub( dip::sint16( -20000 ), dip::sint16( 20000 )) == std::numeric_limits< dip::sint16 >::lowest() );
+
+   DOCTEST_CHECK( dip::saturated_sub( dip::uint32( 100 ), dip::uint32( 1u<<31u )) == 0 );
+   DOCTEST_CHECK( dip::saturated_sub( dip::sint32( 1u<<30u ), -dip::sint32( 1u<<30u )) == std::numeric_limits< dip::sint32 >::max() );
+   DOCTEST_CHECK( dip::saturated_sub( -dip::sint32( 1u<<30u ), dip::sint32( 1u<<30u )) == std::numeric_limits< dip::sint32 >::lowest() );
+
+   DOCTEST_CHECK( dip::saturated_sub( dip::uint64( 9000000000000000000ull ), dip::uint64( 1000000000000000000ull )) == dip::uint64( 8000000000000000000ull ));
+   DOCTEST_CHECK( dip::saturated_sub( dip::uint64( 0ull ), dip::uint64( 9000000000000000000ull )) == dip::uint64( 0ull ));
+
+   DOCTEST_CHECK( dip::saturated_sub( dip::sint64( 9000000000000000000ll ), dip::sint64( 1000000000000000000ll )) == dip::sint64( 8000000000000000000ll ));
+   DOCTEST_CHECK( dip::saturated_sub( dip::sint64( 9000000000000000000ll ), dip::sint64( 9000000000000000000ll )) == 0 );
+   DOCTEST_CHECK( dip::saturated_sub( dip::sint64( 8000000000000000000ll ), dip::sint64( 9000000000000000000ll )) == dip::sint64( -1000000000000000000ll ));
+   DOCTEST_CHECK( dip::saturated_sub( dip::sint64( 9000000000000000000ll ), dip::sint64( -9000000000000000000ll )) == std::numeric_limits< dip::sint64 >::max() );
+   DOCTEST_CHECK( dip::saturated_sub( dip::sint64( 100 ), dip::sint64( -30 )) == dip::sint64( 130 ));
+   DOCTEST_CHECK( dip::saturated_sub( dip::sint64( -100 ), dip::sint64( 30 )) == dip::sint64( -130 ));
+   DOCTEST_CHECK( dip::saturated_sub( dip::sint64( -9000000000000000000ll ), dip::sint64( 5 )) == dip::sint64( -9000000000000000005ll ));
+   DOCTEST_CHECK( dip::saturated_sub( dip::sint64( -9000000000000000000ll ), dip::sint64( 9000000000000000000ll )) == std::numeric_limits< dip::sint64 >::lowest() );
+
+   DOCTEST_CHECK( dip::saturated_sub( 5.0, 3.0 ) == 2.0 );
+
    // Multiplication
-   DOCTEST_CHECK( dip::saturated_mul( dip::sint16( 300 ), dip::sint16( 100 )) == dip::sint16( 30000 ));
-   DOCTEST_CHECK( dip::saturated_mul( dip::sint16( 300 ), dip::sint16( -100 )) == dip::sint16( -30000 ));
-   DOCTEST_CHECK( dip::saturated_mul( dip::sint16( 300 ), dip::sint16( 1000 )) == dip::sint16( 32767 ));
-   DOCTEST_CHECK( dip::saturated_mul( dip::sint16( 300 ), dip::sint16( -1000 )) == dip::sint16( -32768 ));
-   DOCTEST_CHECK( dip::saturated_mul( dip::uint16( 300 ), dip::uint16( 1000 )) == dip::uint16( 65535 ));
+
+   DOCTEST_CHECK( dip::saturated_mul( dip::uint8( 5 ), dip::uint8( 5 )) == dip::uint8( 25 ));
+   DOCTEST_CHECK( dip::saturated_mul( dip::uint8( 20 ), dip::uint8( 20 )) == dip::uint8( 255 ));
+
+   DOCTEST_CHECK( dip::saturated_mul( dip::sint8( 5 ), dip::sint8( 5 )) == dip::sint8( 25 ));
+   DOCTEST_CHECK( dip::saturated_mul( dip::sint8( -5 ), dip::sint8( 5 )) == dip::sint8( -25 ));
+   DOCTEST_CHECK( dip::saturated_mul( dip::sint8( 5 ), dip::sint8( -5 )) == dip::sint8( -25 ));
+   DOCTEST_CHECK( dip::saturated_mul( dip::sint8( -5 ), dip::sint8( -5 )) == dip::sint8( 25 ));
+   DOCTEST_CHECK( dip::saturated_mul( dip::sint8( 20 ), dip::sint8( 20 )) == dip::sint8( 127 ));
+   DOCTEST_CHECK( dip::saturated_mul( dip::sint8( -20 ), dip::sint8( 20 )) == dip::sint8( -128 ));
+   DOCTEST_CHECK( dip::saturated_mul( dip::sint8( 20 ), dip::sint8( -20 )) == dip::sint8( -128 ));
+   DOCTEST_CHECK( dip::saturated_mul( dip::sint8( -20 ), dip::sint8( -20 )) == dip::sint8( 127 ));
+
+   DOCTEST_CHECK( dip::saturated_mul( dip::uint16( 300 ), dip::uint16( 300 )) == std::numeric_limits< dip::uint16 >::max() );
+   DOCTEST_CHECK( dip::saturated_mul( dip::sint16( 300 ), dip::sint16( 300 )) == std::numeric_limits< dip::sint16 >::max() );
+   DOCTEST_CHECK( dip::saturated_mul( dip::sint16( 300 ), dip::sint16( -300 )) == std::numeric_limits< dip::sint16 >::lowest() );
+
+   DOCTEST_CHECK( dip::saturated_mul( dip::uint32( 70000 ), dip::uint32( 70000 )) == std::numeric_limits< dip::uint32 >::max() );
+   DOCTEST_CHECK( dip::saturated_mul( dip::sint32( 70000 ), dip::sint32( 70000 )) == std::numeric_limits< dip::sint32 >::max() );
+   DOCTEST_CHECK( dip::saturated_mul( dip::sint32( 70000 ), dip::sint32( -70000 )) == std::numeric_limits< dip::sint32 >::lowest() );
+
+   DOCTEST_CHECK( dip::saturated_mul( dip::uint64( 5 ), dip::uint64( 5 )) == dip::uint64( 25 ));
+   DOCTEST_CHECK( dip::saturated_mul( dip::uint64( 5000000000 ), dip::uint64( 5000000000 )) == std::numeric_limits< dip::uint64 >::max() );
+
+   DOCTEST_CHECK( dip::saturated_mul( dip::sint64( 5 ), dip::sint64( 5 )) == dip::sint64( 25 ));
+   DOCTEST_CHECK( dip::saturated_mul( dip::sint64( -5 ), dip::sint64( 5 )) == dip::sint64( -25 ));
+   DOCTEST_CHECK( dip::saturated_mul( dip::sint64( 5 ), dip::sint64( -5 )) == dip::sint64( -25 ));
+   DOCTEST_CHECK( dip::saturated_mul( dip::sint64( -5 ), dip::sint64( -5 )) == dip::sint64( 25 ));
+   DOCTEST_CHECK( dip::saturated_mul( dip::sint64( 5000000000 ), dip::sint64( 5000000000 )) == std::numeric_limits< dip::sint64 >::max() );
+   DOCTEST_CHECK( dip::saturated_mul( dip::sint64( -5000000000 ), dip::sint64( 5000000000 )) == std::numeric_limits< dip::sint64 >::lowest() );
+   DOCTEST_CHECK( dip::saturated_mul( dip::sint64( 5000000000 ), dip::sint64( -5000000000 )) == std::numeric_limits< dip::sint64 >::lowest() );
+   DOCTEST_CHECK( dip::saturated_mul( dip::sint64( -5000000000 ), dip::sint64( -5000000000 )) == std::numeric_limits< dip::sint64 >::max() );
+
+   DOCTEST_CHECK( dip::saturated_mul( 5.0, 3.0 ) == 15.0 );
+
    // Division
+
    DOCTEST_CHECK( dip::saturated_div( dip::sint16( 300 ), dip::sint16( 10 )) == dip::sint16( 30 ));
+   DOCTEST_CHECK( dip::saturated_div( dip::sint64( 300 ), dip::sint64( 10 )) == dip::sint64( 30 ));
+   DOCTEST_CHECK( dip::saturated_div( 15.0, 5.0 ) == 3.0 );
+
    // Inversion
+
+   DOCTEST_CHECK( dip::saturated_inv( dip::uint8( 5 )) == dip::uint8( 250 ));
+   DOCTEST_CHECK( dip::saturated_inv( dip::sint8( 5 )) == dip::sint8( -5 ));
+
+   DOCTEST_CHECK( dip::saturated_inv( dip::uint16( 300 )) == dip::uint16( 65235 ));
    DOCTEST_CHECK( dip::saturated_inv( dip::sint16( 300 )) == dip::sint16( -300 ));
    DOCTEST_CHECK( dip::saturated_inv( dip::sint16( -32768 )) == dip::sint16( 32767 ));
    DOCTEST_CHECK( dip::saturated_inv( dip::sint16( -32767 )) == dip::sint16( 32767 ));
    DOCTEST_CHECK( dip::saturated_inv( dip::sint16( -32766 )) == dip::sint16( 32766 ));
-   DOCTEST_CHECK( dip::saturated_inv( dip::uint16( 300 )) == dip::uint16( 65235 ));
+
+   DOCTEST_CHECK( dip::saturated_inv( dip::uint32( 5 )) == std::numeric_limits< dip::uint32 >::max() - dip::uint32( 5 ));
+   DOCTEST_CHECK( dip::saturated_inv( dip::sint32( 5 )) == dip::sint32( -5 ));
+
+   DOCTEST_CHECK( dip::saturated_inv( dip::uint64( 5 )) == std::numeric_limits< dip::uint64 >::max() - dip::uint64( 5 ));
+   DOCTEST_CHECK( dip::saturated_inv( dip::sint64( 5 )) == dip::sint64( -5 ));
+
+   DOCTEST_CHECK( dip::saturated_inv( 5.0 ) == -5.0 );
 }
 
 DOCTEST_TEST_CASE("[DIPlib] testing the dip::gcd function") {

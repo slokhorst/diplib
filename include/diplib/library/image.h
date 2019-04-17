@@ -362,11 +362,11 @@ class DIP_NO_EXPORT Image {
       /// \cond
 
       // This one is to disambiguate calling with a single initializer list. We don't mean UnsignedArray, we mean Pixel.
-      template< typename T, typename = std::enable_if_t< IsSampleType< T >::value >>
+      template< typename T, typename = std::enable_if_t< IsNumericType< T >::value >>
       explicit Image( std::initializer_list< T > values ) : Image( Pixel( values )) {}
 
       // This one is to disambiguate calling with a single initializer list. We don't mean UnsignedArray, we mean Pixel.
-      template< typename T, typename = std::enable_if_t< IsSampleType< T >::value >>
+      template< typename T, typename = std::enable_if_t< IsNumericType< T >::value >>
       explicit Image( std::initializer_list< T > values, dip::DataType dt ) : Image( Pixel( values ), dt ) {}
 
       /// \endcond
@@ -1969,6 +1969,9 @@ class DIP_NO_EXPORT Image {
             case DT_UINT32:
                dataType_ = DT_SINT32;
                break;
+            case DT_UINT64:
+               dataType_ = DT_SINT64;
+               break;
          };
          return *this;
       }
@@ -1995,6 +1998,9 @@ class DIP_NO_EXPORT Image {
                break;
             case DT_SINT32:
                dataType_ = DT_UINT32;
+               break;
+            case DT_SINT64:
+               dataType_ = DT_UINT64;
                break;
          };
          return *this;
@@ -2394,7 +2400,7 @@ class DIP_NO_EXPORT Image {
 
       /// \cond
       // This one is to disambiguate calling with a single initializer list. We don't mean UnsignedArray, we mean Pixel.
-      template< typename T, typename = std::enable_if_t< IsSampleType< T >::value >>
+      template< typename T, typename = std::enable_if_t< IsNumericType< T >::value >>
       Image& operator=( std::initializer_list< T > values ) {
          Fill( Pixel( values ));
          return *this;
