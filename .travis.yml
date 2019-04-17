@@ -1,5 +1,8 @@
 language: cpp
-os: linux
+os:
+  - linux
+  - osx
+  - windows
 dist: xenial
 compiler:
   - clang
